@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>外部画像プレビュー · キャラクター / シチュエーション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#e7eaee;
+    --card:#fbfbfc;
+    --ink:#14161b;
+    --ink-soft:#6f7682;
+    --rule:#ccd1d9;
+    --pine:#0f6d5f;
+    --pine-deep:#0a4d43;
+    --oxide:#b23a2f;
+    --shadow:0 1px 0 rgba(20,22,27,.06), 0 8px 24px -18px rgba(20,22,27,.5);
+    --mono:ui-monospace,SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 20px 96px}
+
+  /* ---------- header ---------- */
+  .masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1.5px solid var(--ink)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--pine);margin:0 0 6px}
+  .masthead h1{margin:0;font-size:27px;font-weight:800;letter-spacing:-.02em}
+  .masthead p{margin:6px 0 0;color:var(--ink-soft);font-size:13px;max-width:52ch}
+
+  /* ---------- form ---------- */
+  .panel{background:var(--card);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);margin-top:22px;padding:22px}
+  .field{margin-bottom:16px}
+  .field:last-of-type{margin-bottom:0}
+  .field label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+  .field input{
+    width:100%;padding:11px 12px;border:1px solid var(--rule);border-radius:2px;background:#fff;
+    font-family:var(--mono);font-size:13.5px;color:var(--ink);
+  }
+  .field input:focus{outline:2px solid var(--pine);outline-offset:1px;border-color:var(--pine)}
+  .field .hint{margin:6px 0 0;font-size:12px;color:var(--ink-soft)}
+  .hint code{font-family:var(--mono);background:#eef0f3;padding:1px 4px;border-radius:2px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.two{grid-template-columns:1fr}}
+
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;padding-top:18px;border-top:1px dashed var(--rule)}
+  button{font-family:var(--sans);font-size:13.5px;font-weight:600;border-radius:2px;cursor:pointer;padding:10px 16px;border:1px solid transparent}
+  button:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+  .btn-main{background:var(--pine);color:#fff}
+  .btn-main:hover{background:var(--pine-deep)}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--rule)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn-ghost:disabled{color:var(--ink-soft);cursor:not-allowed;border-color:var(--rule);opacity:.6}
+
+  /* ---------- summary ---------- */
+  .summary{display:none;margin-top:26px;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--ink-soft);
+    border-top:1.5px solid var(--ink);border-bottom:1px solid var(--rule);padding:10px 2px}
+  .summary.on{display:flex}
+  .summary b{color:var(--ink);font-weight:700}
+
+  /* ---------- grid ---------- */
+  .board{margin-top:24px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .tile{background:var(--card);border:1px solid var(--rule);border-radius:3px;overflow:hidden;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;text-align:left;padding:0;transition:border-color .12s ease, transform .12s ease}
+  .tile:hover{border-color:var(--ink)}
+  .tile.clickable{cursor:pointer}
+  .tile.clickable:hover{transform:translateY(-2px)}
+  .frame{position:relative;aspect-ratio:3/4;background:
+    repeating-linear-gradient(45deg,#eff1f4 0 6px,#e8ebee 6px 12px);
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .frame img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .2s ease}
+  .frame img.shown{opacity:1}
+  .frame .gone{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--oxide);
+    border:1px dashed var(--oxide);padding:4px 7px;border-radius:2px;background:rgba(255,255,255,.75)}
+  .cap{padding:8px 10px;border-top:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .cap .code{font-family:var(--mono);font-size:12px;font-weight:600;word-break:break-all}
+  .cap .n{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);white-space:nowrap}
+
+  /* ---------- detail ---------- */
+  .detailbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  .detailbar h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em;font-family:var(--mono)}
+  .ticks{display:flex;gap:3px;flex-wrap:wrap;margin-left:auto}
+  .tick{width:9px;height:14px;border:1px solid var(--rule);border-radius:1px;background:transparent}
+  .tick.ok{background:var(--pine);border-color:var(--pine)}
+  .tick.bad{border-color:var(--oxide);background:
+    linear-gradient(to top right,transparent 45%,var(--oxide) 45%,var(--oxide) 55%,transparent 55%)}
+
+  /* ---------- missing ---------- */
+  details.missing{margin-top:30px;background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--oxide);border-radius:3px}
+  details.missing summary{cursor:pointer;padding:12px 16px;font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--oxide);font-weight:600}
+  details.missing ul{margin:0;padding:0 16px 16px 34px;max-height:280px;overflow:auto}
+  details.missing li{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);word-break:break-all;margin-bottom:4px}
+
+  .empty{margin-top:40px;padding:36px 20px;text-align:center;border:1px dashed var(--rule);border-radius:3px;color:var(--ink-soft);font-size:13.5px}
+
+  /* ---------- lightbox ---------- */
+  .light{position:fixed;inset:0;background:rgba(16,18,22,.92);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:50;padding:24px}
+  .light.on{display:flex}
+  .light img{max-width:min(96vw,1100px);max-height:82vh;object-fit:contain;box-shadow:0 20px 60px -20px #000}
+  .light .meta{margin-top:14px;font-family:var(--mono);font-size:12px;color:#c8ccd3;text-align:center;word-break:break-all;max-width:90vw}
+  .light nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+  .light nav button{pointer-events:auto;background:rgba(255,255,255,.1);color:#fff;border:0;font-size:22px;padding:18px 14px;margin:0 8px;border-radius:2px}
+  .light nav button:hover{background:rgba(255,255,255,.22)}
+  .light .x{position:absolute;top:16px;right:18px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35);font-family:var(--mono);font-size:12px}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:var(--ink);color:#fff;
+    font-family:var(--mono);font-size:12px;padding:10px 16px;border-radius:2px;opacity:0;pointer-events:none;transition:all .18s ease;z-index:60}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+
+  footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-soft)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">character × scene</p>
+      <h1>外部画像プレビュー</h1>
+      <p>テンプレートURLの <code>キャラクター</code> · <code>シチュエーション</code> の部分をコードに置き換えて、実際にアップロードされている画像と抜けている画像をまとめて確認します。</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="field">
+      <label for="tpl">テンプレート URL</label>
+      <input id="tpl" type="text" spellcheck="false" placeholder="https://example.com/assets/キャラクター/シチュエーション.webp">
+      <p class="hint">URLの中で変わる部分を <code>キャラクター</code>、<code>シチュエーション</code> とそのまま書いてください。<code>キャラ</code> / <code>シチュ</code> / <code>状況</code> という短い表記でも認識します。</p>
+    </div>
+
+    <div class="two">
+      <div class="field">
+        <label for="chars">キャラクターコード</label>
+        <input id="chars" type="text" spellcheck="false" placeholder="a1 ~ a2 ~ a3">
+      </div>
+      <div class="field">
+        <label for="sits">シチュエーションコード</label>
+        <input id="sits" type="text" spellcheck="false" placeholder="1..12 ~ s01..s08">
+      </div>
+    </div>
+    <p class="hint" style="margin-top:-4px">コードは <code>~</code> で区切ります。<code>1..12</code> のように範囲で指定でき、桁数（<code>00..30</code>）や先頭の文字（<code>E1..17</code>、<code>h/01..20</code>）はそのまま保たれます。</p>
+
+    <div class="actions">
+      <button class="btn-main" id="run">一覧を作成</button>
+      <button class="btn-ghost" id="copy" disabled>共有リンクをコピー</button>
+      <button class="btn-ghost" id="dl" disabled>ショートカットを保存</button>
+    </div>
+  </section>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="board" id="board">
+    <div class="empty">テンプレートURLとコードを入力して「一覧を作成」を押してください。</div>
+  </div>
+
+  <details class="missing" id="missingBox" style="display:none">
+    <summary id="missingSummary">見つからない画像 0枚</summary>
+    <ul id="missingList"></ul>
+  </details>
+
+  <footer>読み込めなかったURLは上のリストに記録されます。URLの規則が違う、ホスティング側で外部ドメインからのアクセスを制限している、またはその組み合わせの画像がまだアップロードされていない場合が考えられます。</footer>
+</div>
+
+<div class="light" id="light" role="dialog" aria-modal="true" aria-label="原寸表示">
+  <button class="x" id="lightClose">閉じる ESC</button>
+  <img id="lightImg" alt="">
+  <div class="meta" id="lightMeta"></div>
+  <nav>
+    <button id="prev" aria-label="前へ">‹</button>
+    <button id="next" aria-label="次へ">›</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const tplEl = $('tpl'), charsEl = $('chars'), sitsEl = $('sits');
+  const board = $('board'), summary = $('summary');
+  const missingBox = $('missingBox'), missingList = $('missingList'), missingSummary = $('missingSummary');
+
+  /* 長い表記から先に置換する。韓国語表記のテンプレートもそのまま通す。 */
+  const CHAR_KEYS = ['キャラクター','キャラ','캐릭터'];
+  const SIT_KEYS  = ['シチュエーション','シチュ','状況','상황'];
+
+  const state = { tpl:'', chars:[], sits:[], detail:null };
+  const missing = new Map();      // url
+  const status  = new Map();      // url -> 'ok' | 'bad'
+  let lightItems = [], lightIdx = 0;
+
+  /* ---------- コード展開 ---------- */
+  function expand(raw){
+    const out = [];
+    (raw || '').split('~').forEach(tok => {
+      const t = tok.trim();
+      if (!t) return;
+      const m = t.match(/^(.*?)(\d+)\.\.(\d+)$/);
+      if (m){
+        const prefix = m[1], pad = m[2].length;
+        let a = parseInt(m[2],10), b = parseInt(m[3],10);
+        const step = a <= b ? 1 : -1;
+        for (let i=a; step>0 ? i<=b : i>=b; i+=step){
+          out.push(prefix + String(i).padStart(pad,'0'));
+        }
+      } else out.push(t);
+    });
+    return Array.from(new Set(out));
+  }
+
+  /* ---------- URL 組み立て ---------- */
+  function hasKey(s){
+    return CHAR_KEYS.concat(SIT_KEYS).some(k => s.indexOf(k) !== -1);
+  }
+  function normalizeTpl(s){
+    s = (s || '').trim();
+    if (s.indexOf('%') !== -1){
+      try { const d = decodeURIComponent(s); if (hasKey(d)) return d; } catch(e){}
+    }
+    return s;
+  }
+  function safeEncode(s){
+    return s.replace(/[^\x00-\x7F]/g, c => encodeURIComponent(c)).replace(/ /g,'%20');
+  }
+  function swap(s, keys, val){
+    keys.forEach(k => { s = s.split(k).join(val); });
+    return s;
+  }
+  function buildUrl(ch, si){
+    let u = swap(state.tpl, CHAR_KEYS, ch);
+    u = swap(u, SIT_KEYS, si);
+    return safeEncode(u);
+  }
+
+  /* ---------- タイル ---------- */
+  function makeTile(url, code, sub, onOpen){
+    const tile = document.createElement(onOpen ? 'button' : 'div');
+    tile.className = 'tile' + (onOpen ? ' clickable' : '');
+    if (onOpen) tile.type = 'button';
+
+    const frame = document.createElement('div');
+    frame.className = 'frame';
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.alt = code;
+    img.src = url;
+    img.addEventListener('load', () => { img.classList.add('shown'); mark(url,'ok'); });
+    img.addEventListener('error', () => {
+      mark(url,'bad');
+      const tag = document.createElement('span');
+      tag.className = 'gone';
+      tag.textContent = '画像なし';
+      frame.appendChild(tag);
+      img.remove();
+    });
+    frame.appendChild(img);
+
+    const cap = document.createElement('div');
+    cap.className = 'cap';
+    const c = document.createElement('span'); c.className = 'code'; c.textContent = code;
+    cap.appendChild(c);
+    if (sub){ const n = document.createElement('span'); n.className='n'; n.textContent = sub; cap.appendChild(n); }
+
+    tile.appendChild(frame); tile.appendChild(cap);
+    if (onOpen) tile.addEventListener('click', onOpen);
+    return tile;
+  }
+
+  function mark(url, kind){
+    status.set(url, kind);
+    if (kind === 'bad'){ missing.set(url, url); renderMissing(); }
+    updateTicks();
+  }
+
+  function renderMissing(){
+    const n = missing.size;
+    missingBox.style.display = n ? 'block' : 'none';
+    missingSummary.textContent = '見つからない画像 ' + n + '枚（開く / 閉じる）';
+    missingList.innerHTML = '';
+    missing.forEach((_, url) => {
+      const li = document.createElement('li');
+      li.textContent = decodeURI(url);
+      missingList.appendChild(li);
+    });
+  }
+
+  function updateTicks(){
+    const holder = document.getElementById('tickRow');
+    if (!holder) return;
+    Array.prototype.forEach.call(holder.children, el => {
+      const s = status.get(el.dataset.url);
+      el.className = 'tick' + (s === 'ok' ? ' ok' : s === 'bad' ? ' bad' : '');
+    });
+  }
+
+  /* ---------- 表示 ---------- */
+  function renderSummary(){
+    if (!state.chars.length){ summary.className = 'summary'; return; }
+    summary.className = 'summary on';
+    summary.innerHTML =
+      '<span>キャラクター <b>' + state.chars.length + '</b>件 · シチュエーション <b>' + state.sits.length +
+      '</b>件 · 想定 <b>' + (state.chars.length * state.sits.length) + '</b>枚</span>' +
+      '<span>サムネイル基準コード <b>' + (state.sits[0] || '-') + '</b></span>';
+  }
+
+  function renderGrid(){
+    board.innerHTML = '';
+    if (!state.chars.length || !state.sits.length){
+      board.innerHTML = '<div class="empty">キャラクターコードとシチュエーションコードの両方を入力してください。</div>';
+      return;
+    }
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    state.chars.forEach((ch, i) => {
+      const url = buildUrl(ch, state.sits[0]);
+      grid.appendChild(makeTile(url, ch, state.sits.length + '枚', () => openDetail(i)));
+    });
+    board.appendChild(grid);
+  }
+
+  function renderDetail(){
+    const ch = state.chars[state.detail];
+    board.innerHTML = '';
+
+    const bar = document.createElement('div');
+    bar.className = 'detailbar';
+    const back = document.createElement('button');
+    back.className = 'btn-ghost'; back.textContent = '← 一覧に戻る';
+    back.addEventListener('click', closeDetail);
+    const h = document.createElement('h2'); h.textContent = ch;
+    const ticks = document.createElement('div'); ticks.className = 'ticks'; ticks.id = 'tickRow';
+    bar.appendChild(back); bar.appendChild(h); bar.appendChild(ticks);
+    board.appendChild(bar);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    const items = [];
+    state.sits.forEach((si, k) => {
+      const url = buildUrl(ch, si);
+      items.push({ url:url, label: ch + ' · ' + si });
+      const t = document.createElement('span');
+      t.className = 'tick'; t.dataset.url = url; t.title = si;
+      ticks.appendChild(t);
+      grid.appendChild(makeTile(url, si, '', () => openLight(items, k)));
+    });
+    board.appendChild(grid);
+    updateTicks();
+  }
+
+  function openDetail(i){ state.detail = i; syncUrl(); renderDetail(); window.scrollTo({top:0,behavior:'smooth'}); }
+  function closeDetail(){ state.detail = null; syncUrl(); renderGrid(); }
+
+  /* ---------- 原寸表示 ---------- */
+  const light = $('light'), lightImg = $('lightImg'), lightMeta = $('lightMeta');
+  function openLight(items, idx){
+    lightItems = items; lightIdx = idx;
+    showLight(); light.classList.add('on');
+  }
+  function showLight(){
+    const it = lightItems[lightIdx];
+    lightImg.src = it.url;
+    lightMeta.textContent = it.label + '  —  ' + decodeURI(it.url);
+  }
+  function step(d){
+    if (!lightItems.length) return;
+    lightIdx = (lightIdx + d + lightItems.length) % lightItems.length;
+    showLight();
+  }
+  $('prev').addEventListener('click', () => step(-1));
+  $('next').addEventListener('click', () => step(1));
+  $('lightClose').addEventListener('click', () => light.classList.remove('on'));
+  light.addEventListener('click', e => { if (e.target === light) light.classList.remove('on'); });
+  document.addEventListener('keydown', e => {
+    if (!light.classList.contains('on')) return;
+    if (e.key === 'Escape') light.classList.remove('on');
+    if (e.key === 'ArrowLeft') step(-1);
+    if (e.key === 'ArrowRight') step(1);
+  });
+
+  /* ---------- URL 状態 ---------- */
+  function syncUrl(){
+    const p = new URLSearchParams();
+    if (tplEl.value.trim()) p.set('t', tplEl.value.trim());
+    if (charsEl.value.trim()) p.set('c', charsEl.value.trim());
+    if (sitsEl.value.trim()) p.set('s', sitsEl.value.trim());
+    if (state.detail !== null) p.set('d', String(state.detail));
+    history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p.toString() : ''));
+    $('copy').disabled = !state.chars.length;
+    $('dl').disabled = !state.chars.length;
+  }
+
+  function run(keepDetail){
+    state.tpl = normalizeTpl(tplEl.value);
+    tplEl.value = state.tpl;
+    state.chars = expand(charsEl.value);
+    state.sits = expand(sitsEl.value);
+    missing.clear(); status.clear(); renderMissing();
+    if (!keepDetail || state.detail === null || state.detail >= state.chars.length) state.detail = null;
+    renderSummary(); syncUrl();
+    if (state.detail === null) renderGrid(); else renderDetail();
+  }
+
+  $('run').addEventListener('click', () => run(false));
+  [tplEl, charsEl, sitsEl].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') run(false); }));
+
+  /* ---------- コピー / ショートカット ---------- */
+  function toast(msg){
+    const t = $('toast'); t.textContent = msg; t.classList.add('on');
+    setTimeout(() => t.classList.remove('on'), 1600);
+  }
+  $('copy').addEventListener('click', () => {
+    const url = location.href;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('リンクをコピーしました'), () => toast('コピーできませんでした'));
+    else { prompt('以下のURLをコピーしてください', url); }
+  });
+  $('dl').addEventListener('click', () => {
+    const url = location.href;
+    const html = '<!DOCTYPE HTML>\n<meta charset="UTF-8">\n<meta http-equiv="refresh" content="0; url=' + url + '">\n<script>\n  window.location.href = ' + JSON.stringify(url) + ';\n<\/script>\n';
+    const blob = new Blob([html], { type:'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'preview-link.html';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast('ショートカットを保存しました');
+  });
+
+  /* ---------- 初期化 ---------- */
+  (function init(){
+    const p = new URLSearchParams(location.search);
+    tplEl.value = p.get('t') || '';
+    charsEl.value = p.get('c') || '';
+    sitsEl.value = p.get('s') || '';
+    const d = p.get('d');
+    if (tplEl.value && charsEl.value && sitsEl.value){
+      state.detail = d !== null ? parseInt(d,10) : null;
+      run(true);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
