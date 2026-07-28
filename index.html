@@ -104,11 +104,6 @@
   /* ---------- detail ---------- */
   .detailbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
   .detailbar h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em;font-family:var(--mono)}
-  .ticks{display:flex;gap:3px;flex-wrap:wrap;margin-left:auto}
-  .tick{width:9px;height:14px;border:1px solid var(--rule);border-radius:1px;background:transparent}
-  .tick.ok{background:var(--pine);border-color:var(--pine)}
-  .tick.bad{border-color:var(--oxide);background:
-    linear-gradient(to top right,transparent 45%,var(--oxide) 45%,var(--oxide) 55%,transparent 55%)}
 
   /* ---------- missing ---------- */
   details.missing{margin-top:30px;background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--oxide);border-radius:3px}
@@ -394,7 +389,6 @@
   function mark(url, kind){
     status.set(url, kind);
     if (kind === 'bad'){ missing.set(url, url); renderMissing(); }
-    updateTicks();
   }
 
   function renderMissing(){
@@ -406,15 +400,6 @@
       const li = document.createElement('li');
       li.textContent = decodeURI(url);
       missingList.appendChild(li);
-    });
-  }
-
-  function updateTicks(){
-    const holder = document.getElementById('tickRow');
-    if (!holder) return;
-    Array.prototype.forEach.call(holder.children, el => {
-      const s = status.get(el.dataset.url);
-      el.className = 'tick' + (s === 'ok' ? ' ok' : s === 'bad' ? ' bad' : '');
     });
   }
 
@@ -454,8 +439,7 @@
     back.className = 'btn-ghost'; back.textContent = T().back;
     back.addEventListener('click', closeDetail);
     const h = document.createElement('h2'); h.textContent = ch;
-    const ticks = document.createElement('div'); ticks.className = 'ticks'; ticks.id = 'tickRow';
-    bar.appendChild(back); bar.appendChild(h); bar.appendChild(ticks);
+    bar.appendChild(back); bar.appendChild(h);
     board.appendChild(bar);
 
     const grid = document.createElement('div');
@@ -464,13 +448,9 @@
     state.sits.forEach((si, k) => {
       const url = buildUrl(ch, si);
       items.push({ url:url, label: ch + ' · ' + si });
-      const t = document.createElement('span');
-      t.className = 'tick'; t.dataset.url = url; t.title = si;
-      ticks.appendChild(t);
       grid.appendChild(makeTile(url, si, '', () => openLight(items, k)));
     });
     board.appendChild(grid);
-    updateTicks();
   }
 
   function openDetail(i){ state.detail = i; syncUrl(); renderDetail(); window.scrollTo({top:0,behavior:'smooth'}); }
