@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>外部画像プレビュー · キャラクター / シチュエーション</title>
+<title>외부이미지 미리보기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -19,25 +20,35 @@
     --oxide:#b23a2f;
     --shadow:0 1px 0 rgba(20,22,27,.06), 0 8px 24px -18px rgba(20,22,27,.5);
     --mono:ui-monospace,SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
-    --sans:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{
+    --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
     background:var(--paper);
     color:var(--ink);
     font-family:var(--sans);
     font-size:15px;
-    line-height:1.6;
+    line-height:1.55;
     -webkit-font-smoothing:antialiased;
+  }
+  body[data-lang="ja"]{
+    --sans:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
+    line-height:1.6;
   }
   .wrap{max-width:1180px;margin:0 auto;padding:32px 20px 96px}
 
   /* ---------- header ---------- */
   .masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1.5px solid var(--ink)}
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--pine);margin:0 0 6px}
-  .masthead h1{margin:0;font-size:27px;font-weight:800;letter-spacing:-.02em}
+  .masthead h1{margin:0;font-size:27px;font-weight:800;letter-spacing:-.025em}
   .masthead p{margin:6px 0 0;color:var(--ink-soft);font-size:13px;max-width:52ch}
+
+  .langswitch{display:flex;border:1px solid var(--ink);border-radius:2px;overflow:hidden;flex:0 0 auto}
+  .langswitch button{background:transparent;color:var(--ink);border:0;border-radius:0;padding:7px 14px;font-size:12.5px;font-weight:600}
+  .langswitch button + button{border-left:1px solid var(--ink)}
+  .langswitch button[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .langswitch button:hover:not([aria-pressed="true"]){background:#dde1e6}
 
   /* ---------- form ---------- */
   .panel{background:var(--card);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);margin-top:22px;padding:22px}
@@ -49,7 +60,7 @@
     font-family:var(--mono);font-size:13.5px;color:var(--ink);
   }
   .field input:focus{outline:2px solid var(--pine);outline-offset:1px;border-color:var(--pine)}
-  .field .hint{margin:6px 0 0;font-size:12px;color:var(--ink-soft)}
+  .hint{margin:6px 0 0;font-size:12px;color:var(--ink-soft)}
   .hint code{font-family:var(--mono);background:#eef0f3;padding:1px 4px;border-radius:2px}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media(max-width:640px){.two{grid-template-columns:1fr}}
@@ -72,13 +83,14 @@
 
   /* ---------- grid ---------- */
   .board{margin-top:24px}
-  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+  @media(max-width:640px){.grid{gap:10px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
   .tile{background:var(--card);border:1px solid var(--rule);border-radius:3px;overflow:hidden;box-shadow:var(--shadow);
     display:flex;flex-direction:column;text-align:left;padding:0;transition:border-color .12s ease, transform .12s ease}
   .tile:hover{border-color:var(--ink)}
   .tile.clickable{cursor:pointer}
   .tile.clickable:hover{transform:translateY(-2px)}
-  .frame{position:relative;aspect-ratio:3/4;background:
+  .frame{position:relative;aspect-ratio:1/1;background:
     repeating-linear-gradient(45deg,#eff1f4 0 6px,#e8ebee 6px 12px);
     display:flex;align-items:center;justify-content:center;overflow:hidden}
   .frame img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .2s ease}
@@ -125,64 +137,66 @@
   @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
 </head>
-<body>
+<body data-lang="ko">
 <div class="wrap">
 
   <header class="masthead">
     <div>
       <p class="eyebrow">character × scene</p>
-      <h1>外部画像プレビュー</h1>
-      <p>テンプレートURLの <code>キャラクター</code> · <code>シチュエーション</code> の部分をコードに置き換えて、実際にアップロードされている画像と抜けている画像をまとめて確認します。</p>
+      <h1 data-t="h1"></h1>
+      <p data-th="lede"></p>
+    </div>
+    <div class="langswitch" role="group" aria-label="Language">
+      <button type="button" id="langKo" aria-pressed="true">한국어</button>
+      <button type="button" id="langJa" aria-pressed="false">日本語</button>
     </div>
   </header>
 
   <section class="panel">
     <div class="field">
-      <label for="tpl">テンプレート URL</label>
-      <input id="tpl" type="text" spellcheck="false" placeholder="https://example.com/assets/キャラクター/シチュエーション.webp">
-      <p class="hint">URLの中で変わる部分を <code>キャラクター</code>、<code>シチュエーション</code> とそのまま書いてください。<code>キャラ</code> / <code>シチュ</code> / <code>状況</code> という短い表記でも認識します。</p>
+      <label for="tpl" data-t="tplLabel"></label>
+      <input id="tpl" type="text" spellcheck="false" data-ph="tplPh">
+      <p class="hint" data-th="tplHint"></p>
     </div>
 
     <div class="two">
       <div class="field">
-        <label for="chars">キャラクターコード</label>
+        <label for="chars" data-t="charLabel"></label>
         <input id="chars" type="text" spellcheck="false" placeholder="a1 ~ a2 ~ a3">
       </div>
       <div class="field">
-        <label for="sits">シチュエーションコード</label>
+        <label for="sits" data-t="sitLabel"></label>
         <input id="sits" type="text" spellcheck="false" placeholder="1..12 ~ s01..s08">
       </div>
     </div>
-    <p class="hint" style="margin-top:-4px">コードは <code>~</code> で区切ります。<code>1..12</code> のように範囲で指定でき、桁数（<code>00..30</code>）や先頭の文字（<code>E1..17</code>、<code>h/01..20</code>）はそのまま保たれます。</p>
+    <p class="hint" style="margin-top:-4px" data-th="codeHint"></p>
 
     <div class="actions">
-      <button class="btn-main" id="run">一覧を作成</button>
-      <button class="btn-ghost" id="copy" disabled>共有リンクをコピー</button>
-      <button class="btn-ghost" id="dl" disabled>ショートカットを保存</button>
+      <button class="btn-main" id="run" data-t="run"></button>
+      <button class="btn-ghost" id="copy" disabled data-t="copy"></button>
+      <button class="btn-ghost" id="dl" disabled data-t="dl"></button>
     </div>
   </section>
 
   <div class="summary" id="summary"></div>
 
-  <div class="board" id="board">
-    <div class="empty">テンプレートURLとコードを入力して「一覧を作成」を押してください。</div>
-  </div>
+  <div class="board" id="board"></div>
 
   <details class="missing" id="missingBox" style="display:none">
-    <summary id="missingSummary">見つからない画像 0枚</summary>
+    <summary id="missingSummary"></summary>
     <ul id="missingList"></ul>
   </details>
 
-  <footer>読み込めなかったURLは上のリストに記録されます。URLの規則が違う、ホスティング側で外部ドメインからのアクセスを制限している、またはその組み合わせの画像がまだアップロードされていない場合が考えられます。</footer>
+  <footer data-t="footer"></footer>
 </div>
 
-<div class="light" id="light" role="dialog" aria-modal="true" aria-label="原寸表示">
-  <button class="x" id="lightClose">閉じる ESC</button>
+<div class="light" id="light" role="dialog" aria-modal="true">
+  <button class="x" id="lightClose" data-t="close"></button>
   <img id="lightImg" alt="">
   <div class="meta" id="lightMeta"></div>
   <nav>
-    <button id="prev" aria-label="前へ">‹</button>
-    <button id="next" aria-label="次へ">›</button>
+    <button id="prev" data-ta="prev">‹</button>
+    <button id="next" data-ta="next">›</button>
   </nav>
 </div>
 
@@ -192,21 +206,120 @@
 (function(){
   "use strict";
 
+  /* ================= 문구 / テキスト ================= */
+  const I18N = {
+    ko: {
+      docTitle: '외부이미지 미리보기 · 캐릭터/상황',
+      h1: '외부이미지 미리보기',
+      lede: '템플릿 주소의 <code>캐릭터</code> · <code>상황</code> 자리를 코드로 채워, 실제로 올라간 이미지와 빠진 이미지를 한 번에 확인합니다.',
+      tplLabel: '템플릿 URL',
+      tplPh: 'https://example.com/assets/캐릭터/상황.webp',
+      tplHint: '주소에서 바뀌는 부분을 <code>캐릭터</code>, <code>상황</code> 이라고 그대로 적어주세요. 일본어 표기(<code>キャラクター</code> / <code>シチュエーション</code>)도 그대로 인식합니다.',
+      charLabel: '캐릭터 코드',
+      sitLabel: '상황 코드',
+      codeHint: '코드는 <code>~</code> 로 구분합니다. <code>1..12</code> 처럼 범위를 쓸 수 있고, 자리수(<code>00..30</code>)와 앞글자(<code>E1..17</code>, <code>h/01..20</code>)는 그대로 유지됩니다.',
+      run: '목록 생성',
+      copy: '공유 링크 복사',
+      dl: '바로가기 파일 저장',
+      emptyStart: '템플릿 주소와 코드를 넣고 목록 생성을 눌러주세요.',
+      emptyCodes: '캐릭터 코드와 상황 코드를 모두 넣어주세요.',
+      back: '← 목록으로',
+      gone: '이미지 없음',
+      close: '닫기 ESC',
+      prev: '이전',
+      next: '다음',
+      footer: '불러오지 못한 주소는 위 목록에 쌓입니다. 주소 규칙이 틀렸거나, 호스팅에서 외부 도메인 접근을 막았거나, 해당 조합 이미지가 아직 올라가지 않은 경우입니다.',
+      summary: (c, s, total, first) =>
+        '<span>캐릭터 <b>' + c + '</b>종 · 상황 <b>' + s + '</b>종 · 예상 <b>' + total + '</b>장</span>' +
+        '<span>썸네일 기준 상황코드 <b>' + first + '</b></span>',
+      tileSub: n => n + '장',
+      missing: n => '없는 이미지 ' + n + '장 (펼치기/접기)',
+      copied: '링크를 복사했습니다',
+      copyFail: '복사에 실패했습니다',
+      copyPrompt: '아래 주소를 복사해주세요',
+      saved: '바로가기 파일을 저장했습니다'
+    },
+    ja: {
+      docTitle: '外部画像プレビュー · キャラクター/シチュエーション',
+      h1: '外部画像プレビュー',
+      lede: 'テンプレートURLの <code>キャラクター</code> · <code>シチュエーション</code> の部分をコードに置き換えて、実際にアップロードされている画像と抜けている画像をまとめて確認します。',
+      tplLabel: 'テンプレート URL',
+      tplPh: 'https://example.com/assets/キャラクター/シチュエーション.webp',
+      tplHint: 'URLの中で変わる部分を <code>キャラクター</code>、<code>シチュエーション</code> とそのまま書いてください。<code>キャラ</code> / <code>シチュ</code> / <code>状況</code> や韓国語表記（<code>캐릭터</code> / <code>상황</code>）も認識します。',
+      charLabel: 'キャラクターコード',
+      sitLabel: 'シチュエーションコード',
+      codeHint: 'コードは <code>~</code> で区切ります。<code>1..12</code> のように範囲で指定でき、桁数（<code>00..30</code>）や先頭の文字（<code>E1..17</code>、<code>h/01..20</code>）はそのまま保たれます。',
+      run: '一覧を作成',
+      copy: '共有リンクをコピー',
+      dl: 'ショートカットを保存',
+      emptyStart: 'テンプレートURLとコードを入力して「一覧を作成」を押してください。',
+      emptyCodes: 'キャラクターコードとシチュエーションコードの両方を入力してください。',
+      back: '← 一覧に戻る',
+      gone: '画像なし',
+      close: '閉じる ESC',
+      prev: '前へ',
+      next: '次へ',
+      footer: '読み込めなかったURLは上のリストに記録されます。URLの規則が違う、ホスティング側で外部ドメインからのアクセスを制限している、またはその組み合わせの画像がまだアップロードされていない場合が考えられます。',
+      summary: (c, s, total, first) =>
+        '<span>キャラクター <b>' + c + '</b>件 · シチュエーション <b>' + s + '</b>件 · 想定 <b>' + total + '</b>枚</span>' +
+        '<span>サムネイル基準コード <b>' + first + '</b></span>',
+      tileSub: n => n + '枚',
+      missing: n => '見つからない画像 ' + n + '枚（開く / 閉じる）',
+      copied: 'リンクをコピーしました',
+      copyFail: 'コピーできませんでした',
+      copyPrompt: '以下のURLをコピーしてください',
+      saved: 'ショートカットを保存しました'
+    }
+  };
+
+  /* 긴 표기부터 치환. 두 언어 표기를 모두 받는다. */
+  const CHAR_KEYS = ['キャラクター','キャラ','캐릭터'];
+  const SIT_KEYS  = ['シチュエーション','シチュ','状況','상황'];
+
   const $ = id => document.getElementById(id);
   const tplEl = $('tpl'), charsEl = $('chars'), sitsEl = $('sits');
   const board = $('board'), summary = $('summary');
   const missingBox = $('missingBox'), missingList = $('missingList'), missingSummary = $('missingSummary');
 
-  /* 長い表記から先に置換する。韓国語表記のテンプレートもそのまま通す。 */
-  const CHAR_KEYS = ['キャラクター','キャラ','캐릭터'];
-  const SIT_KEYS  = ['シチュエーション','シチュ','状況','상황'];
-
-  const state = { tpl:'', chars:[], sits:[], detail:null };
-  const missing = new Map();      // url
-  const status  = new Map();      // url -> 'ok' | 'bad'
+  const state = { lang:'ko', tpl:'', chars:[], sits:[], detail:null, ran:false };
+  const missing = new Map();
+  const status  = new Map();
   let lightItems = [], lightIdx = 0;
 
-  /* ---------- コード展開 ---------- */
+  const T = () => I18N[state.lang];
+
+  /* ================= 언어 적용 ================= */
+  function applyLang(){
+    const t = T();
+    document.documentElement.lang = state.lang;
+    document.body.dataset.lang = state.lang;
+    document.title = t.docTitle;
+
+    document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t[el.dataset.t]; });
+    document.querySelectorAll('[data-th]').forEach(el => { el.innerHTML = t[el.dataset.th]; });
+    document.querySelectorAll('[data-ph]').forEach(el => { el.placeholder = t[el.dataset.ph]; });
+    document.querySelectorAll('[data-ta]').forEach(el => { el.setAttribute('aria-label', t[el.dataset.ta]); });
+
+    $('langKo').setAttribute('aria-pressed', state.lang === 'ko');
+    $('langJa').setAttribute('aria-pressed', state.lang === 'ja');
+
+    renderSummary();
+    renderMissing();
+    if (!state.ran) board.innerHTML = '<div class="empty">' + t.emptyStart + '</div>';
+    else if (state.detail === null) renderGrid();
+    else renderDetail();
+  }
+
+  function setLang(lang){
+    if (lang !== 'ko' && lang !== 'ja') lang = 'ko';
+    state.lang = lang;
+    applyLang();
+    syncUrl();
+  }
+  $('langKo').addEventListener('click', () => setLang('ko'));
+  $('langJa').addEventListener('click', () => setLang('ja'));
+
+  /* ================= 코드 확장 ================= */
   function expand(raw){
     const out = [];
     (raw || '').split('~').forEach(tok => {
@@ -225,10 +338,8 @@
     return Array.from(new Set(out));
   }
 
-  /* ---------- URL 組み立て ---------- */
-  function hasKey(s){
-    return CHAR_KEYS.concat(SIT_KEYS).some(k => s.indexOf(k) !== -1);
-  }
+  /* ================= URL 조립 ================= */
+  function hasKey(s){ return CHAR_KEYS.concat(SIT_KEYS).some(k => s.indexOf(k) !== -1); }
   function normalizeTpl(s){
     s = (s || '').trim();
     if (s.indexOf('%') !== -1){
@@ -239,17 +350,14 @@
   function safeEncode(s){
     return s.replace(/[^\x00-\x7F]/g, c => encodeURIComponent(c)).replace(/ /g,'%20');
   }
-  function swap(s, keys, val){
-    keys.forEach(k => { s = s.split(k).join(val); });
-    return s;
-  }
+  function swap(s, keys, val){ keys.forEach(k => { s = s.split(k).join(val); }); return s; }
   function buildUrl(ch, si){
     let u = swap(state.tpl, CHAR_KEYS, ch);
     u = swap(u, SIT_KEYS, si);
     return safeEncode(u);
   }
 
-  /* ---------- タイル ---------- */
+  /* ================= 타일 ================= */
   function makeTile(url, code, sub, onOpen){
     const tile = document.createElement(onOpen ? 'button' : 'div');
     tile.className = 'tile' + (onOpen ? ' clickable' : '');
@@ -266,7 +374,7 @@
       mark(url,'bad');
       const tag = document.createElement('span');
       tag.className = 'gone';
-      tag.textContent = '画像なし';
+      tag.textContent = T().gone;
       frame.appendChild(tag);
       img.remove();
     });
@@ -292,7 +400,7 @@
   function renderMissing(){
     const n = missing.size;
     missingBox.style.display = n ? 'block' : 'none';
-    missingSummary.textContent = '見つからない画像 ' + n + '枚（開く / 閉じる）';
+    missingSummary.textContent = T().missing(n);
     missingList.innerHTML = '';
     missing.forEach((_, url) => {
       const li = document.createElement('li');
@@ -310,27 +418,28 @@
     });
   }
 
-  /* ---------- 表示 ---------- */
+  /* ================= 화면 ================= */
   function renderSummary(){
-    if (!state.chars.length){ summary.className = 'summary'; return; }
+    if (!state.chars.length){ summary.className = 'summary'; summary.innerHTML = ''; return; }
     summary.className = 'summary on';
-    summary.innerHTML =
-      '<span>キャラクター <b>' + state.chars.length + '</b>件 · シチュエーション <b>' + state.sits.length +
-      '</b>件 · 想定 <b>' + (state.chars.length * state.sits.length) + '</b>枚</span>' +
-      '<span>サムネイル基準コード <b>' + (state.sits[0] || '-') + '</b></span>';
+    summary.innerHTML = T().summary(
+      state.chars.length, state.sits.length,
+      state.chars.length * state.sits.length,
+      state.sits[0] || '-'
+    );
   }
 
   function renderGrid(){
     board.innerHTML = '';
     if (!state.chars.length || !state.sits.length){
-      board.innerHTML = '<div class="empty">キャラクターコードとシチュエーションコードの両方を入力してください。</div>';
+      board.innerHTML = '<div class="empty">' + T().emptyCodes + '</div>';
       return;
     }
     const grid = document.createElement('div');
     grid.className = 'grid';
     state.chars.forEach((ch, i) => {
       const url = buildUrl(ch, state.sits[0]);
-      grid.appendChild(makeTile(url, ch, state.sits.length + '枚', () => openDetail(i)));
+      grid.appendChild(makeTile(url, ch, T().tileSub(state.sits.length), () => openDetail(i)));
     });
     board.appendChild(grid);
   }
@@ -342,7 +451,7 @@
     const bar = document.createElement('div');
     bar.className = 'detailbar';
     const back = document.createElement('button');
-    back.className = 'btn-ghost'; back.textContent = '← 一覧に戻る';
+    back.className = 'btn-ghost'; back.textContent = T().back;
     back.addEventListener('click', closeDetail);
     const h = document.createElement('h2'); h.textContent = ch;
     const ticks = document.createElement('div'); ticks.className = 'ticks'; ticks.id = 'tickRow';
@@ -367,12 +476,9 @@
   function openDetail(i){ state.detail = i; syncUrl(); renderDetail(); window.scrollTo({top:0,behavior:'smooth'}); }
   function closeDetail(){ state.detail = null; syncUrl(); renderGrid(); }
 
-  /* ---------- 原寸表示 ---------- */
+  /* ================= 원본 보기 ================= */
   const light = $('light'), lightImg = $('lightImg'), lightMeta = $('lightMeta');
-  function openLight(items, idx){
-    lightItems = items; lightIdx = idx;
-    showLight(); light.classList.add('on');
-  }
+  function openLight(items, idx){ lightItems = items; lightIdx = idx; showLight(); light.classList.add('on'); }
   function showLight(){
     const it = lightItems[lightIdx];
     lightImg.src = it.url;
@@ -394,14 +500,15 @@
     if (e.key === 'ArrowRight') step(1);
   });
 
-  /* ---------- URL 状態 ---------- */
+  /* ================= URL 상태 ================= */
   function syncUrl(){
     const p = new URLSearchParams();
+    p.set('lang', state.lang);
     if (tplEl.value.trim()) p.set('t', tplEl.value.trim());
     if (charsEl.value.trim()) p.set('c', charsEl.value.trim());
     if (sitsEl.value.trim()) p.set('s', sitsEl.value.trim());
     if (state.detail !== null) p.set('d', String(state.detail));
-    history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p.toString() : ''));
+    history.replaceState(null, '', location.pathname + '?' + p.toString());
     $('copy').disabled = !state.chars.length;
     $('dl').disabled = !state.chars.length;
   }
@@ -411,6 +518,7 @@
     tplEl.value = state.tpl;
     state.chars = expand(charsEl.value);
     state.sits = expand(sitsEl.value);
+    state.ran = true;
     missing.clear(); status.clear(); renderMissing();
     if (!keepDetail || state.detail === null || state.detail >= state.chars.length) state.detail = null;
     renderSummary(); syncUrl();
@@ -420,15 +528,15 @@
   $('run').addEventListener('click', () => run(false));
   [tplEl, charsEl, sitsEl].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') run(false); }));
 
-  /* ---------- コピー / ショートカット ---------- */
+  /* ================= 복사 / 바로가기 ================= */
   function toast(msg){
     const t = $('toast'); t.textContent = msg; t.classList.add('on');
     setTimeout(() => t.classList.remove('on'), 1600);
   }
   $('copy').addEventListener('click', () => {
     const url = location.href;
-    if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('リンクをコピーしました'), () => toast('コピーできませんでした'));
-    else { prompt('以下のURLをコピーしてください', url); }
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast(T().copied), () => toast(T().copyFail));
+    else prompt(T().copyPrompt, url);
   });
   $('dl').addEventListener('click', () => {
     const url = location.href;
@@ -436,22 +544,32 @@
     const blob = new Blob([html], { type:'text/html' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'preview-link.html';
+    a.download = 'preview-' + state.lang + '.html';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('ショートカットを保存しました');
+    toast(T().saved);
   });
 
-  /* ---------- 初期化 ---------- */
+  /* ================= 초기화 ================= */
   (function init(){
     const p = new URLSearchParams(location.search);
+    const q = (p.get('lang') || '').toLowerCase();
+    if (q === 'ja' || q === 'jp') state.lang = 'ja';
+    else if (q === 'ko' || q === 'kr') state.lang = 'ko';
+    else state.lang = (navigator.language || '').toLowerCase().indexOf('ja') === 0 ? 'ja' : 'ko';
+
     tplEl.value = p.get('t') || '';
     charsEl.value = p.get('c') || '';
     sitsEl.value = p.get('s') || '';
     const d = p.get('d');
+
+    applyLang();
+
     if (tplEl.value && charsEl.value && sitsEl.value){
       state.detail = d !== null ? parseInt(d,10) : null;
       run(true);
+    } else {
+      syncUrl();
     }
   })();
 })();
