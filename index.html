@@ -55,6 +55,7 @@
   .field{margin-bottom:16px}
   .field:last-of-type{margin-bottom:0}
   .field label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+  .field label .opt{font-size:10px;letter-spacing:.06em;color:var(--pine);margin-left:6px}
   .field input{
     width:100%;padding:11px 12px;border:1px solid var(--rule);border-radius:2px;background:#fff;
     font-family:var(--mono);font-size:13.5px;color:var(--ink);
@@ -62,8 +63,8 @@
   .field input:focus{outline:2px solid var(--pine);outline-offset:1px;border-color:var(--pine)}
   .hint{margin:6px 0 0;font-size:12px;color:var(--ink-soft)}
   .hint code{font-family:var(--mono);background:#eef0f3;padding:1px 4px;border-radius:2px}
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media(max-width:640px){.two{grid-template-columns:1fr}}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:820px){.three{grid-template-columns:1fr}}
 
   .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;padding-top:18px;border-top:1px dashed var(--rule)}
   button{font-family:var(--sans);font-size:13.5px;font-weight:600;border-radius:2px;cursor:pointer;padding:10px 16px;border:1px solid transparent}
@@ -137,7 +138,7 @@
 
   <header class="masthead">
     <div>
-      <p class="eyebrow">character × scene</p>
+      <p class="eyebrow">character × outfit × scene</p>
       <h1 data-t="h1"></h1>
       <p data-th="lede"></p>
     </div>
@@ -154,14 +155,18 @@
       <p class="hint" data-th="tplHint"></p>
     </div>
 
-    <div class="two">
+    <div class="three">
       <div class="field">
         <label for="chars" data-t="charLabel"></label>
-        <input id="chars" type="text" spellcheck="false" placeholder="a1 ~ a2 ~ a3">
+        <input id="chars" type="text" spellcheck="false" placeholder="a1, a2, a3">
+      </div>
+      <div class="field">
+        <label for="outs"><span data-t="outLabel"></span><span class="opt" data-t="optional"></span></label>
+        <input id="outs" type="text" spellcheck="false" data-ph="outPh">
       </div>
       <div class="field">
         <label for="sits" data-t="sitLabel"></label>
-        <input id="sits" type="text" spellcheck="false" placeholder="1..12 ~ s01..s08">
+        <input id="sits" type="text" spellcheck="false" placeholder="1..12, s01..s08">
       </div>
     </div>
     <p class="hint" style="margin-top:-4px" data-th="codeHint"></p>
@@ -190,8 +195,8 @@
   <img id="lightImg" alt="">
   <div class="meta" id="lightMeta"></div>
   <nav>
-    <button id="prev" data-ta="prev">‹</button>
-    <button id="next" data-ta="next">›</button>
+    <button id="prev" data-ta="prev">&lsaquo;</button>
+    <button id="next" data-ta="next">&rsaquo;</button>
   </nav>
 </div>
 
@@ -202,64 +207,78 @@
   "use strict";
 
   /* ================= 문구 / テキスト ================= */
-  const I18N = {
+  var I18N = {
     ko: {
-      docTitle: '외부이미지 미리보기 · 캐릭터/상황',
+      docTitle: '외부이미지 미리보기 · 캐릭터/의상/상황',
       h1: '외부이미지 미리보기',
-      lede: '템플릿 주소의 <code>캐릭터</code> · <code>상황</code> 자리를 코드로 채워, 실제로 올라간 이미지와 빠진 이미지를 한 번에 확인합니다.',
+      lede: '템플릿 주소의 <code>캐릭터</code> · <code>의상</code> · <code>상황</code> 자리를 코드로 채워, 실제로 올라간 이미지와 빠진 이미지를 한 번에 확인합니다.',
       tplLabel: '템플릿 URL',
-      tplPh: 'https://example.com/assets/캐릭터/상황.webp',
-      tplHint: '주소에서 바뀌는 부분을 <code>캐릭터</code>, <code>상황</code> 이라고 그대로 적어주세요. 일본어 표기(<code>キャラクター</code> / <code>シチュエーション</code>)도 그대로 인식합니다.',
+      tplPh: 'https://example.com/assets/캐릭터/의상/상황.webp',
+      tplHint: '주소에서 바뀌는 부분을 <code>캐릭터</code>, <code>의상</code>, <code>상황</code> 이라고 그대로 적어주세요. 일본어 표기(<code>キャラクター</code> / <code>衣装</code> / <code>シチュエーション</code>)도 인식합니다.',
       charLabel: '캐릭터 코드',
+      outLabel: '의상 코드',
+      optional: '없으면 빈칸',
+      outPh: '(없으면 비워두세요)',
       sitLabel: '상황 코드',
-      codeHint: '코드는 <code>~</code> 로 구분합니다. <code>1..12</code> 처럼 범위를 쓸 수 있고, 자리수(<code>00..30</code>)와 앞글자(<code>E1..17</code>, <code>h/01..20</code>)는 그대로 유지됩니다.',
+      codeHint: '코드는 <code>,</code> 로 구분합니다. <code>1..12</code> 처럼 범위를 쓸 수 있고, 자리수(<code>00..30</code>)와 앞글자(<code>E1..17</code>, <code>h/01..20</code>)는 그대로 유지됩니다.',
       run: '목록 생성',
       copy: '공유 링크 복사',
       dl: '바로가기 파일 저장',
       emptyStart: '템플릿 주소와 코드를 넣고 목록 생성을 눌러주세요.',
       emptyCodes: '캐릭터 코드와 상황 코드를 모두 넣어주세요.',
       back: '← 목록으로',
+      backChar: '← 의상 목록으로',
       gone: '이미지 없음',
       close: '닫기 ESC',
       prev: '이전',
       next: '다음',
       footer: '불러오지 못한 주소는 위 목록에 쌓입니다. 주소 규칙이 틀렸거나, 호스팅에서 외부 도메인 접근을 막았거나, 해당 조합 이미지가 아직 올라가지 않은 경우입니다.',
-      summary: (c, s, total, first) =>
-        '<span>캐릭터 <b>' + c + '</b>종 · 상황 <b>' + s + '</b>종 · 예상 <b>' + total + '</b>장</span>' +
-        '<span>썸네일 기준 상황코드 <b>' + first + '</b></span>',
-      tileSub: n => n + '장',
-      missing: n => '없는 이미지 ' + n + '장 (펼치기/접기)',
+      summary: function(c, o, s, total, first){
+        var mid = o ? ' · 의상 <b>' + o + '</b>종' : '';
+        return '<span>캐릭터 <b>' + c + '</b>종' + mid + ' · 상황 <b>' + s + '</b>종 · 예상 <b>' + total + '</b>장</span>' +
+               '<span>썸네일 기준 상황코드 <b>' + first + '</b></span>';
+      },
+      subSit: function(n){ return n + '장'; },
+      subOut: function(o, s){ return '의상 ' + o + '종'; },
+      missing: function(n){ return '없는 이미지 ' + n + '장 (펼치기/접기)'; },
       copied: '링크를 복사했습니다',
       copyFail: '복사에 실패했습니다',
       copyPrompt: '아래 주소를 복사해주세요',
       saved: '바로가기 파일을 저장했습니다'
     },
     ja: {
-      docTitle: '外部画像プレビュー · キャラクター/シチュエーション',
+      docTitle: '外部画像プレビュー · キャラクター/衣装/シチュエーション',
       h1: '外部画像プレビュー',
-      lede: 'テンプレートURLの <code>キャラクター</code> · <code>シチュエーション</code> の部分をコードに置き換えて、実際にアップロードされている画像と抜けている画像をまとめて確認します。',
+      lede: 'テンプレートURLの <code>キャラクター</code> · <code>衣装</code> · <code>シチュエーション</code> の部分をコードに置き換えて、実際にアップロードされている画像と抜けている画像をまとめて確認します。',
       tplLabel: 'テンプレート URL',
-      tplPh: 'https://example.com/assets/キャラクター/シチュエーション.webp',
-      tplHint: 'URLの中で変わる部分を <code>キャラクター</code>、<code>シチュエーション</code> とそのまま書いてください。<code>キャラ</code> / <code>シチュ</code> / <code>状況</code> や韓国語表記（<code>캐릭터</code> / <code>상황</code>）も認識します。',
+      tplPh: 'https://example.com/assets/キャラクター/衣装/シチュエーション.webp',
+      tplHint: 'URLの中で変わる部分を <code>キャラクター</code>、<code>衣装</code>、<code>シチュエーション</code> とそのまま書いてください。<code>キャラ</code> / <code>シチュ</code> / <code>状況</code> や韓国語表記（<code>캐릭터</code> / <code>의상</code> / <code>상황</code>）も認識します。',
       charLabel: 'キャラクターコード',
+      outLabel: '衣装コード',
+      optional: '無ければ空欄',
+      outPh: '（無ければ空欄のまま）',
       sitLabel: 'シチュエーションコード',
-      codeHint: 'コードは <code>~</code> で区切ります。<code>1..12</code> のように範囲で指定でき、桁数（<code>00..30</code>）や先頭の文字（<code>E1..17</code>、<code>h/01..20</code>）はそのまま保たれます。',
+      codeHint: 'コードは <code>,</code> で区切ります。<code>1..12</code> のように範囲で指定でき、桁数（<code>00..30</code>）や先頭の文字（<code>E1..17</code>、<code>h/01..20</code>）はそのまま保たれます。',
       run: '一覧を作成',
       copy: '共有リンクをコピー',
       dl: 'ショートカットを保存',
       emptyStart: 'テンプレートURLとコードを入力して「一覧を作成」を押してください。',
       emptyCodes: 'キャラクターコードとシチュエーションコードの両方を入力してください。',
       back: '← 一覧に戻る',
+      backChar: '← 衣装一覧に戻る',
       gone: '画像なし',
       close: '閉じる ESC',
       prev: '前へ',
       next: '次へ',
       footer: '読み込めなかったURLは上のリストに記録されます。URLの規則が違う、ホスティング側で外部ドメインからのアクセスを制限している、またはその組み合わせの画像がまだアップロードされていない場合が考えられます。',
-      summary: (c, s, total, first) =>
-        '<span>キャラクター <b>' + c + '</b>件 · シチュエーション <b>' + s + '</b>件 · 想定 <b>' + total + '</b>枚</span>' +
-        '<span>サムネイル基準コード <b>' + first + '</b></span>',
-      tileSub: n => n + '枚',
-      missing: n => '見つからない画像 ' + n + '枚（開く / 閉じる）',
+      summary: function(c, o, s, total, first){
+        var mid = o ? ' · 衣装 <b>' + o + '</b>件' : '';
+        return '<span>キャラクター <b>' + c + '</b>件' + mid + ' · シチュエーション <b>' + s + '</b>件 · 想定 <b>' + total + '</b>枚</span>' +
+               '<span>サムネイル基準コード <b>' + first + '</b></span>';
+      },
+      subSit: function(n){ return n + '枚'; },
+      subOut: function(o, s){ return '衣装 ' + o + '件'; },
+      missing: function(n){ return '見つからない画像 ' + n + '枚（開く / 閉じる）'; },
       copied: 'リンクをコピーしました',
       copyFail: 'コピーできませんでした',
       copyPrompt: '以下のURLをコピーしてください',
@@ -268,64 +287,63 @@
   };
 
   /* 긴 표기부터 치환. 두 언어 표기를 모두 받는다. */
-  const CHAR_KEYS = ['キャラクター','キャラ','캐릭터'];
-  const SIT_KEYS  = ['シチュエーション','シチュ','状況','상황'];
+  var CHAR_KEYS = ['キャラクター','キャラ','캐릭터'];
+  var OUT_KEYS  = ['コスチューム','衣装','의상'];
+  var SIT_KEYS  = ['シチュエーション','シチュ','状況','상황'];
 
-  const $ = id => document.getElementById(id);
-  const tplEl = $('tpl'), charsEl = $('chars'), sitsEl = $('sits');
-  const board = $('board'), summary = $('summary');
-  const missingBox = $('missingBox'), missingList = $('missingList'), missingSummary = $('missingSummary');
+  function $(id){ return document.getElementById(id); }
+  var tplEl = $('tpl'), charsEl = $('chars'), outsEl = $('outs'), sitsEl = $('sits');
+  var board = $('board'), summary = $('summary');
+  var missingBox = $('missingBox'), missingList = $('missingList'), missingSummary = $('missingSummary');
 
-  const state = { lang:'ko', tpl:'', chars:[], sits:[], detail:null, ran:false };
-  const missing = new Map();
-  const status  = new Map();
-  let lightItems = [], lightIdx = 0;
+  var state = { lang:'ko', tpl:'', chars:[], outs:[], sits:[], ci:null, oi:null, ran:false };
+  var missing = new Map();
+  var lightItems = [], lightIdx = 0;
 
-  const T = () => I18N[state.lang];
+  function T(){ return I18N[state.lang]; }
+  function hasOut(){ return state.outs.length > 0; }
 
   /* ================= 언어 적용 ================= */
   function applyLang(){
-    const t = T();
+    var t = T();
     document.documentElement.lang = state.lang;
     document.body.dataset.lang = state.lang;
     document.title = t.docTitle;
 
-    document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t[el.dataset.t]; });
-    document.querySelectorAll('[data-th]').forEach(el => { el.innerHTML = t[el.dataset.th]; });
-    document.querySelectorAll('[data-ph]').forEach(el => { el.placeholder = t[el.dataset.ph]; });
-    document.querySelectorAll('[data-ta]').forEach(el => { el.setAttribute('aria-label', t[el.dataset.ta]); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function(el){ el.textContent = t[el.dataset.t]; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-th]'), function(el){ el.innerHTML = t[el.dataset.th]; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ph]'), function(el){ el.placeholder = t[el.dataset.ph]; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ta]'), function(el){ el.setAttribute('aria-label', t[el.dataset.ta]); });
 
     $('langKo').setAttribute('aria-pressed', state.lang === 'ko');
     $('langJa').setAttribute('aria-pressed', state.lang === 'ja');
 
     renderSummary();
     renderMissing();
-    if (!state.ran) board.innerHTML = '<div class="empty">' + t.emptyStart + '</div>';
-    else if (state.detail === null) renderGrid();
-    else renderDetail();
+    paint();
   }
 
   function setLang(lang){
-    if (lang !== 'ko' && lang !== 'ja') lang = 'ko';
-    state.lang = lang;
+    state.lang = (lang === 'ja') ? 'ja' : 'ko';
     applyLang();
     syncUrl();
   }
-  $('langKo').addEventListener('click', () => setLang('ko'));
-  $('langJa').addEventListener('click', () => setLang('ja'));
+  $('langKo').addEventListener('click', function(){ setLang('ko'); });
+  $('langJa').addEventListener('click', function(){ setLang('ja'); });
 
   /* ================= 코드 확장 ================= */
+  /* 구분자는 쉼표. 예전 링크 호환을 위해 ~ 도 계속 받는다. */
   function expand(raw){
-    const out = [];
-    (raw || '').split('~').forEach(tok => {
-      const t = tok.trim();
+    var out = [];
+    (raw || '').split(/[,~]/).forEach(function(tok){
+      var t = tok.trim();
       if (!t) return;
-      const m = t.match(/^(.*?)(\d+)\.\.(\d+)$/);
+      var m = t.match(/^(.*?)(\d+)\.\.(\d+)$/);
       if (m){
-        const prefix = m[1], pad = m[2].length;
-        let a = parseInt(m[2],10), b = parseInt(m[3],10);
-        const step = a <= b ? 1 : -1;
-        for (let i=a; step>0 ? i<=b : i>=b; i+=step){
+        var prefix = m[1], pad = m[2].length;
+        var a = parseInt(m[2],10), b = parseInt(m[3],10);
+        var step = a <= b ? 1 : -1;
+        for (var i=a; step>0 ? i<=b : i>=b; i+=step){
           out.push(prefix + String(i).padStart(pad,'0'));
         }
       } else out.push(t);
@@ -334,40 +352,46 @@
   }
 
   /* ================= URL 조립 ================= */
-  function hasKey(s){ return CHAR_KEYS.concat(SIT_KEYS).some(k => s.indexOf(k) !== -1); }
+  function hasKey(s){
+    return CHAR_KEYS.concat(OUT_KEYS, SIT_KEYS).some(function(k){ return s.indexOf(k) !== -1; });
+  }
   function normalizeTpl(s){
     s = (s || '').trim();
     if (s.indexOf('%') !== -1){
-      try { const d = decodeURIComponent(s); if (hasKey(d)) return d; } catch(e){}
+      try { var d = decodeURIComponent(s); if (hasKey(d)) return d; } catch(e){}
     }
     return s;
   }
   function safeEncode(s){
-    return s.replace(/[^\x00-\x7F]/g, c => encodeURIComponent(c)).replace(/ /g,'%20');
+    return s.replace(/[^\x00-\x7F]/g, function(c){ return encodeURIComponent(c); }).replace(/ /g,'%20');
   }
-  function swap(s, keys, val){ keys.forEach(k => { s = s.split(k).join(val); }); return s; }
-  function buildUrl(ch, si){
-    let u = swap(state.tpl, CHAR_KEYS, ch);
+  function swap(s, keys, val){ keys.forEach(function(k){ s = s.split(k).join(val); }); return s; }
+  function buildUrl(ch, co, si){
+    var u = swap(state.tpl, CHAR_KEYS, ch);
+    u = swap(u, OUT_KEYS, co || '');
     u = swap(u, SIT_KEYS, si);
     return safeEncode(u);
+  }
+  function labelOf(ch, co, si){
+    return [ch, co, si].filter(Boolean).join(' · ');
   }
 
   /* ================= 타일 ================= */
   function makeTile(url, code, sub, onOpen){
-    const tile = document.createElement(onOpen ? 'button' : 'div');
+    var tile = document.createElement(onOpen ? 'button' : 'div');
     tile.className = 'tile' + (onOpen ? ' clickable' : '');
     if (onOpen) tile.type = 'button';
 
-    const frame = document.createElement('div');
+    var frame = document.createElement('div');
     frame.className = 'frame';
-    const img = document.createElement('img');
+    var img = document.createElement('img');
     img.loading = 'lazy';
     img.alt = code;
     img.src = url;
-    img.addEventListener('load', () => { img.classList.add('shown'); mark(url,'ok'); });
-    img.addEventListener('error', () => {
-      mark(url,'bad');
-      const tag = document.createElement('span');
+    img.addEventListener('load', function(){ img.classList.add('shown'); });
+    img.addEventListener('error', function(){
+      missing.set(url, url); renderMissing();
+      var tag = document.createElement('span');
       tag.className = 'gone';
       tag.textContent = T().gone;
       frame.appendChild(tag);
@@ -375,29 +399,24 @@
     });
     frame.appendChild(img);
 
-    const cap = document.createElement('div');
+    var cap = document.createElement('div');
     cap.className = 'cap';
-    const c = document.createElement('span'); c.className = 'code'; c.textContent = code;
+    var c = document.createElement('span'); c.className = 'code'; c.textContent = code;
     cap.appendChild(c);
-    if (sub){ const n = document.createElement('span'); n.className='n'; n.textContent = sub; cap.appendChild(n); }
+    if (sub){ var n = document.createElement('span'); n.className='n'; n.textContent = sub; cap.appendChild(n); }
 
     tile.appendChild(frame); tile.appendChild(cap);
     if (onOpen) tile.addEventListener('click', onOpen);
     return tile;
   }
 
-  function mark(url, kind){
-    status.set(url, kind);
-    if (kind === 'bad'){ missing.set(url, url); renderMissing(); }
-  }
-
   function renderMissing(){
-    const n = missing.size;
+    var n = missing.size;
     missingBox.style.display = n ? 'block' : 'none';
     missingSummary.textContent = T().missing(n);
     missingList.innerHTML = '';
-    missing.forEach((_, url) => {
-      const li = document.createElement('li');
+    missing.forEach(function(_, url){
+      var li = document.createElement('li');
       li.textContent = decodeURI(url);
       missingList.appendChild(li);
     });
@@ -406,61 +425,98 @@
   /* ================= 화면 ================= */
   function renderSummary(){
     if (!state.chars.length){ summary.className = 'summary'; summary.innerHTML = ''; return; }
+    var o = hasOut() ? state.outs.length : 0;
+    var total = state.chars.length * (o || 1) * state.sits.length;
     summary.className = 'summary on';
-    summary.innerHTML = T().summary(
-      state.chars.length, state.sits.length,
-      state.chars.length * state.sits.length,
-      state.sits[0] || '-'
-    );
+    summary.innerHTML = T().summary(state.chars.length, o, state.sits.length, total, state.sits[0] || '-');
   }
 
-  function renderGrid(){
+  function bar(backLabel, titleText, onBack){
+    var b = document.createElement('div');
+    b.className = 'detailbar';
+    var back = document.createElement('button');
+    back.className = 'btn-ghost'; back.textContent = backLabel;
+    back.addEventListener('click', onBack);
+    var h = document.createElement('h2'); h.textContent = titleText;
+    b.appendChild(back); b.appendChild(h);
+    return b;
+  }
+
+  /* 1단계 — 캐릭터 */
+  function renderChars(){
     board.innerHTML = '';
     if (!state.chars.length || !state.sits.length){
       board.innerHTML = '<div class="empty">' + T().emptyCodes + '</div>';
       return;
     }
-    const grid = document.createElement('div');
+    var grid = document.createElement('div');
     grid.className = 'grid';
-    state.chars.forEach((ch, i) => {
-      const url = buildUrl(ch, state.sits[0]);
-      grid.appendChild(makeTile(url, ch, T().tileSub(state.sits.length), () => openDetail(i)));
+    var firstOut = hasOut() ? state.outs[0] : '';
+    state.chars.forEach(function(ch, i){
+      var url = buildUrl(ch, firstOut, state.sits[0]);
+      var sub = hasOut() ? T().subOut(state.outs.length, state.sits.length) : T().subSit(state.sits.length);
+      grid.appendChild(makeTile(url, ch, sub, function(){ goChar(i); }));
     });
     board.appendChild(grid);
   }
 
-  function renderDetail(){
-    const ch = state.chars[state.detail];
+  /* 2단계 — 의상 (의상 코드가 있을 때만) */
+  function renderOuts(){
+    var ch = state.chars[state.ci];
     board.innerHTML = '';
-
-    const bar = document.createElement('div');
-    bar.className = 'detailbar';
-    const back = document.createElement('button');
-    back.className = 'btn-ghost'; back.textContent = T().back;
-    back.addEventListener('click', closeDetail);
-    const h = document.createElement('h2'); h.textContent = ch;
-    bar.appendChild(back); bar.appendChild(h);
-    board.appendChild(bar);
-
-    const grid = document.createElement('div');
+    board.appendChild(bar(T().back, ch, goRoot));
+    var grid = document.createElement('div');
     grid.className = 'grid';
-    const items = [];
-    state.sits.forEach((si, k) => {
-      const url = buildUrl(ch, si);
-      items.push({ url:url, label: ch + ' · ' + si });
-      grid.appendChild(makeTile(url, si, '', () => openLight(items, k)));
+    state.outs.forEach(function(co, k){
+      var url = buildUrl(ch, co, state.sits[0]);
+      grid.appendChild(makeTile(url, co, T().subSit(state.sits.length), function(){ goOut(k); }));
     });
     board.appendChild(grid);
   }
 
-  function openDetail(i){ state.detail = i; syncUrl(); renderDetail(); window.scrollTo({top:0,behavior:'smooth'}); }
-  function closeDetail(){ state.detail = null; syncUrl(); renderGrid(); }
+  /* 3단계 — 상황 */
+  function renderSits(){
+    var ch = state.chars[state.ci];
+    var co = hasOut() ? state.outs[state.oi] : '';
+    board.innerHTML = '';
+    board.appendChild(bar(
+      hasOut() ? T().backChar : T().back,
+      labelOf(ch, co, ''),
+      hasOut() ? goChar.bind(null, state.ci) : goRoot
+    ));
+
+    var grid = document.createElement('div');
+    grid.className = 'grid';
+    var items = [];
+    state.sits.forEach(function(si, k){
+      var url = buildUrl(ch, co, si);
+      items.push({ url:url, label: labelOf(ch, co, si) });
+      grid.appendChild(makeTile(url, si, '', function(){ openLight(items, k); }));
+    });
+    board.appendChild(grid);
+  }
+
+  function paint(){
+    if (!state.ran){ board.innerHTML = '<div class="empty">' + T().emptyStart + '</div>'; return; }
+    if (state.ci === null) renderChars();
+    else if (hasOut() && state.oi === null) renderOuts();
+    else renderSits();
+  }
+
+  function goRoot(){ state.ci = null; state.oi = null; syncUrl(); paint(); }
+  function goChar(i){
+    state.ci = i;
+    state.oi = hasOut() ? null : 0;
+    syncUrl(); paint();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function goOut(k){ state.oi = k; syncUrl(); paint(); window.scrollTo({top:0,behavior:'smooth'}); }
 
   /* ================= 원본 보기 ================= */
-  const light = $('light'), lightImg = $('lightImg'), lightMeta = $('lightMeta');
+  var light = $('light'), lightImg = $('lightImg'), lightMeta = $('lightMeta');
   function openLight(items, idx){ lightItems = items; lightIdx = idx; showLight(); light.classList.add('on'); }
   function showLight(){
-    const it = lightItems[lightIdx];
+    var it = lightItems[lightIdx];
     lightImg.src = it.url;
     lightMeta.textContent = it.label + '  —  ' + decodeURI(it.url);
   }
@@ -469,11 +525,11 @@
     lightIdx = (lightIdx + d + lightItems.length) % lightItems.length;
     showLight();
   }
-  $('prev').addEventListener('click', () => step(-1));
-  $('next').addEventListener('click', () => step(1));
-  $('lightClose').addEventListener('click', () => light.classList.remove('on'));
-  light.addEventListener('click', e => { if (e.target === light) light.classList.remove('on'); });
-  document.addEventListener('keydown', e => {
+  $('prev').addEventListener('click', function(){ step(-1); });
+  $('next').addEventListener('click', function(){ step(1); });
+  $('lightClose').addEventListener('click', function(){ light.classList.remove('on'); });
+  light.addEventListener('click', function(e){ if (e.target === light) light.classList.remove('on'); });
+  document.addEventListener('keydown', function(e){
     if (!light.classList.contains('on')) return;
     if (e.key === 'Escape') light.classList.remove('on');
     if (e.key === 'ArrowLeft') step(-1);
@@ -482,71 +538,81 @@
 
   /* ================= URL 상태 ================= */
   function syncUrl(){
-    const p = new URLSearchParams();
+    var p = new URLSearchParams();
     p.set('lang', state.lang);
     if (tplEl.value.trim()) p.set('t', tplEl.value.trim());
     if (charsEl.value.trim()) p.set('c', charsEl.value.trim());
+    if (outsEl.value.trim()) p.set('o', outsEl.value.trim());
     if (sitsEl.value.trim()) p.set('s', sitsEl.value.trim());
-    if (state.detail !== null) p.set('d', String(state.detail));
+    if (state.ci !== null) p.set('ci', String(state.ci));
+    if (state.ci !== null && state.oi !== null && hasOut()) p.set('oi', String(state.oi));
     history.replaceState(null, '', location.pathname + '?' + p.toString());
     $('copy').disabled = !state.chars.length;
     $('dl').disabled = !state.chars.length;
   }
 
-  function run(keepDetail){
+  function run(keep){
     state.tpl = normalizeTpl(tplEl.value);
     tplEl.value = state.tpl;
     state.chars = expand(charsEl.value);
-    state.sits = expand(sitsEl.value);
+    state.outs  = expand(outsEl.value);
+    state.sits  = expand(sitsEl.value);
     state.ran = true;
-    missing.clear(); status.clear(); renderMissing();
-    if (!keepDetail || state.detail === null || state.detail >= state.chars.length) state.detail = null;
-    renderSummary(); syncUrl();
-    if (state.detail === null) renderGrid(); else renderDetail();
+    missing.clear(); renderMissing();
+
+    if (!keep || state.ci === null || state.ci >= state.chars.length){ state.ci = null; state.oi = null; }
+    else if (!hasOut()) state.oi = 0;
+    else if (state.oi !== null && state.oi >= state.outs.length) state.oi = null;
+
+    renderSummary(); syncUrl(); paint();
   }
 
-  $('run').addEventListener('click', () => run(false));
-  [tplEl, charsEl, sitsEl].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') run(false); }));
+  $('run').addEventListener('click', function(){ run(false); });
+  [tplEl, charsEl, outsEl, sitsEl].forEach(function(el){
+    el.addEventListener('keydown', function(e){ if (e.key === 'Enter') run(false); });
+  });
 
   /* ================= 복사 / 바로가기 ================= */
   function toast(msg){
-    const t = $('toast'); t.textContent = msg; t.classList.add('on');
-    setTimeout(() => t.classList.remove('on'), 1600);
+    var t = $('toast'); t.textContent = msg; t.classList.add('on');
+    setTimeout(function(){ t.classList.remove('on'); }, 1600);
   }
-  $('copy').addEventListener('click', () => {
-    const url = location.href;
-    if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast(T().copied), () => toast(T().copyFail));
+  $('copy').addEventListener('click', function(){
+    var url = location.href;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(function(){ toast(T().copied); }, function(){ toast(T().copyFail); });
     else prompt(T().copyPrompt, url);
   });
-  $('dl').addEventListener('click', () => {
-    const url = location.href;
-    const html = '<!DOCTYPE HTML>\n<meta charset="UTF-8">\n<meta http-equiv="refresh" content="0; url=' + url + '">\n<script>\n  window.location.href = ' + JSON.stringify(url) + ';\n<\/script>\n';
-    const blob = new Blob([html], { type:'text/html' });
-    const a = document.createElement('a');
+  $('dl').addEventListener('click', function(){
+    var url = location.href;
+    var html = '<!DOCTYPE HTML>\n<meta charset="UTF-8">\n<meta http-equiv="refresh" content="0; url=' + url + '">\n<script>\n  window.location.href = ' + JSON.stringify(url) + ';\n<\/script>\n';
+    var blob = new Blob([html], { type:'text/html' });
+    var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'preview-' + state.lang + '.html';
     a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
     toast(T().saved);
   });
 
   /* ================= 초기화 ================= */
   (function init(){
-    const p = new URLSearchParams(location.search);
-    const q = (p.get('lang') || '').toLowerCase();
+    var p = new URLSearchParams(location.search);
+    var q = (p.get('lang') || '').toLowerCase();
     if (q === 'ja' || q === 'jp') state.lang = 'ja';
     else if (q === 'ko' || q === 'kr') state.lang = 'ko';
     else state.lang = (navigator.language || '').toLowerCase().indexOf('ja') === 0 ? 'ja' : 'ko';
 
     tplEl.value = p.get('t') || '';
     charsEl.value = p.get('c') || '';
+    outsEl.value = p.get('o') || '';
     sitsEl.value = p.get('s') || '';
-    const d = p.get('d');
 
     applyLang();
 
     if (tplEl.value && charsEl.value && sitsEl.value){
-      state.detail = d !== null ? parseInt(d,10) : null;
+      var ci = p.get('ci'), oi = p.get('oi');
+      state.ci = ci !== null ? parseInt(ci,10) : null;
+      state.oi = oi !== null ? parseInt(oi,10) : null;
       run(true);
     } else {
       syncUrl();
